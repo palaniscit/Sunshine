@@ -1,0 +1,35 @@
+package com.example.palaniyappan.sunshine.app;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public class DetailActivityFragment extends Fragment {
+
+    public DetailActivityFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+
+        // Get weather data from parent activity using the Intent
+        Intent intent = getActivity().getIntent();
+
+        if(intent != null && intent.hasExtra("weatherData")) {
+            TextView textView = (TextView)rootView.findViewById(R.id.weatherData);
+            textView.setText(intent.getCharSequenceExtra("weatherData"));
+        }
+
+        return rootView;
+    }
+}
