@@ -53,7 +53,6 @@ public class MainActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         Log.v(TAG, "In onResume");
-        Log.v(TAG, "Just testing a GIT commit");
     }
 
     @Override
