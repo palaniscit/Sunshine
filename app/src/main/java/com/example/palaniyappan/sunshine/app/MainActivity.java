@@ -47,6 +47,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onStart() {
         super.onStart();
         Log.v(TAG, "In onStart");
+        // SOme changes
     }
 
     @Override
