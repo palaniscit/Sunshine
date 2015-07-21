@@ -13,4 +13,8 @@
     <string name="view_map">View in Map</string>
     <string name="menu_share">Share</string>
     <string name="hashtag_sunshine">#SunshineApp</string>
+    <string name="pref_units_metric">M</string>
+    <string name="pref_units_imperial">I</string>
+    <string name="display_pref_units_metric">Metric</string>
+    <string name="display_pref_units_imperial">Imperial</string>
 </resources>
