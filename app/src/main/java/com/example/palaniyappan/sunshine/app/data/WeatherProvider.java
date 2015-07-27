@@ -37,6 +37,10 @@ public class WeatherProvider extends ContentProvider {
 
     private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
 
+    private static final SQLiteQueryBuilder sWeatherQueryBuilder;
+
+    private static final SQLiteQueryBuilder sLocationQueryBuilder;
+
     static{
         sWeatherByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
 
@@ -49,6 +53,12 @@ public class WeatherProvider extends ContentProvider {
                         "." + WeatherContract.WeatherEntry.COLUMN_LOC_KEY +
                         " = " + WeatherContract.LocationEntry.TABLE_NAME +
                         "." + WeatherContract.LocationEntry._ID);
+
+        sWeatherQueryBuilder = new SQLiteQueryBuilder();
+        sWeatherQueryBuilder.setTables(WeatherContract.WeatherEntry.TABLE_NAME);
+
+        sLocationQueryBuilder = new SQLiteQueryBuilder();
+        sLocationQueryBuilder.setTables(WeatherContract.LocationEntry.TABLE_NAME);
     }
 
     //location.location_setting = ?
@@ -67,6 +77,26 @@ public class WeatherProvider extends ContentProvider {
             WeatherContract.LocationEntry.TABLE_NAME +
                     "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
+
+    private Cursor getWeather(Uri uri,String[] projection, String sortOrder) {
+        return sWeatherQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                null,
+                null,
+                null,
+                null,
+                sortOrder);
+    }
+
+    private Cursor getLocation(Uri uri, String[] projection, String sortOrder) {
+        return sLocationQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                null,
+                null,
+                null,
+                null,
+                sortOrder);
+    }
 
     private Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
@@ -189,12 +219,12 @@ public class WeatherProvider extends ContentProvider {
             }
             // "weather"
             case WEATHER: {
-                retCursor = null;
+                retCursor = getWeather(uri, projection, sortOrder);
                 break;
             }
             // "location"
             case LOCATION: {
-                retCursor = null;
+                retCursor = getLocation(uri, projection, sortOrder);
                 break;
             }
 
@@ -224,6 +254,15 @@ public class WeatherProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             }
+            case LOCATION: {
+                long _id = db.insert(WeatherContract.LocationEntry.TABLE_NAME, null, values);
+                if(_id > 0) {
+                   returnUri =  WeatherContract.LocationEntry.buildLocationUri(_id);
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -234,17 +273,39 @@ public class WeatherProvider extends ContentProvider {
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         // Student: Start by getting a writable database
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
         // Student: Use the uriMatcher to match the WEATHER and LOCATION URI's we are going to
         // handle.  If it doesn't match these, throw an UnsupportedOperationException.
+        final int  match = sUriMatcher.match(uri);
+        int numberOfDeletedRows = 0;
+
+        switch (match) {
+            case WEATHER: {
+                numberOfDeletedRows = db.delete(WeatherContract.WeatherEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            }
+            case LOCATION: {
+                numberOfDeletedRows = db.delete(WeatherContract.LocationEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Unknown Uri: " + uri);
+        }
+
 
         // Student: A null value deletes all rows.  In my implementation of this, I only notified
         // the uri listeners (using the content resolver) if the rowsDeleted != 0 or the selection
         // is null.
         // Oh, and you should notify the listeners here.
+        if(numberOfDeletedRows != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        db.close();
 
         // Student: return the actual rows deleted
-        return 0;
+        return numberOfDeletedRows;
     }
 
     private void normalizeDate(ContentValues values) {
@@ -260,7 +321,30 @@ public class WeatherProvider extends ContentProvider {
             Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         // Student: This is a lot like the delete function.  We return the number of rows impacted
         // by the update.
-        return 0;
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+        final int match = sUriMatcher.match(uri);
+        int numberOfRowsUpdated = 0;
+
+        switch(match) {
+            case WEATHER: {
+                numberOfRowsUpdated = db.update(WeatherContract.WeatherEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            }
+            case LOCATION: {
+                numberOfRowsUpdated = db.update(WeatherContract.LocationEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Invalid URI: " + uri);
+        }
+
+        if(numberOfRowsUpdated != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        db.close();
+        return numberOfRowsUpdated;
     }
 
     @Override
