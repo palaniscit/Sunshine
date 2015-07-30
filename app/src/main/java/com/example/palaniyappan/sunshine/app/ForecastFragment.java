@@ -45,7 +45,7 @@ import java.util.ArrayList;
  */
 public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
-    private static final int FORECAST_LOADER = 1;
+    private static final int FORECAST_LOADER = 0;
 
     private static final String[] FORECAST_COLUMNS = {
             // In this case the id needs to be fully qualified with a table name, since
@@ -143,8 +143,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                     String locationSetting = Utility.getPreferredLocation(getActivity());
                     Intent intent = new Intent(getActivity(), DetailActivity.class);
                     intent.setData(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                            locationSetting,
-                            cur.getLong(COL_WEATHER_DATE))
+                                    locationSetting,
+                                    cur.getLong(COL_WEATHER_DATE))
                     );
                     startActivity(intent);
                 }
@@ -154,11 +154,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         return rootView;
     }
 
-    @Override
+    /*@Override
     public void onStart() {
         super.onStart();
         updateWeather();
-    }
+    }*/
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -194,8 +194,14 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     public void updateWeather() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String userPreferredLocation = preferences.getString(getString(R.string.pref_loc_key), getString(R.string.pref_loc_default_value));
+        String userPreferredLocation = preferences.getString(getString(R.string.pref_loc_key),
+                getString(R.string.pref_loc_default_value));
         FetchWeatherTask task = new FetchWeatherTask(getActivity());
         task.execute(userPreferredLocation);
+    }
+
+    public void onLocationChanged() {
+        updateWeather();
+        getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
     }
 }

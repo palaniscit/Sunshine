@@ -9,13 +9,20 @@ import android.view.MenuItem;
 
 
 public class MainActivity extends ActionBarActivity {
-    String TAG = MainActivity.class.getSimpleName();
+    private final String TAG = MainActivity.class.getSimpleName();
+    String mLocation;
+    private final String FORECASTFRAGMENT_TAG = "FFTAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mLocation = Utility.getPreferredLocation(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.v(TAG, "In onCreate");
+        if(savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment, new ForecastFragment(), FORECASTFRAGMENT_TAG)
+                    .commit();
+        }
     }
 
 
@@ -53,7 +60,17 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.v(TAG, "In onResume");
+        String currentLocationSetting = Utility.getPreferredLocation(this);
+        // Check if location setting has changed
+        if(currentLocationSetting != null && !currentLocationSetting.equalsIgnoreCase(mLocation)) {
+            // Get the forecast fragment using the Forecast fragment tag
+            ForecastFragment ff = (ForecastFragment) getSupportFragmentManager().
+                    findFragmentByTag(FORECASTFRAGMENT_TAG);
+            if(null != ff) {
+                ff.onLocationChanged();
+            }
+            mLocation = currentLocationSetting;
+        }
     }
 
     @Override
