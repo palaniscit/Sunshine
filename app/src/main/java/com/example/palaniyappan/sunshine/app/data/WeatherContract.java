@@ -84,6 +84,14 @@ public class WeatherContract {
         public static Uri buildLocationUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
+
+        public static Uri buildLocationSettingUri(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
+        }
+
+        public static String getLocationSettingFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
     }
 
     /* Inner class that defines the table contents of the weather table */

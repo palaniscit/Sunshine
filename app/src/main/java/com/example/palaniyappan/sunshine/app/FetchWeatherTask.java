@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
@@ -64,10 +66,12 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
 
         // First, check if the location with this city name exists in the db
         Cursor locationCursor = mContext.getContentResolver().query(
-                WeatherContract.LocationEntry.CONTENT_URI,
+                WeatherContract.LocationEntry.buildLocationSettingUri(locationSetting),
                 new String[]{WeatherContract.LocationEntry._ID},
-                WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
-                new String[]{locationSetting},
+                null,
+                null,
+                //WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
+                //new String[]{locationSetting},
                 null);
 
         if (locationCursor.moveToFirst()) {

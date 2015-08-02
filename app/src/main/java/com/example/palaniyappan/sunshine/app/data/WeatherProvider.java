@@ -22,6 +22,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.location.Location;
 import android.net.Uri;
 
 public class WeatherProvider extends ContentProvider {
@@ -34,6 +35,7 @@ public class WeatherProvider extends ContentProvider {
     static final int WEATHER_WITH_LOCATION = 101;
     static final int WEATHER_WITH_LOCATION_AND_DATE = 102;
     static final int LOCATION = 300;
+    static final int LOCATION_WITH_SETTING = 301;
 
     private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
 
@@ -98,6 +100,23 @@ public class WeatherProvider extends ContentProvider {
                 sortOrder);
     }
 
+    private Cursor getLocationByLocationSetting(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = WeatherContract.LocationEntry.getLocationSettingFromUri(uri);
+        String[] selectionArgs = null;
+        String selection = null;
+        if(locationSetting != null) {
+            selection = sLocationSettingSelection;
+            selectionArgs = new String[] {locationSetting};
+        }
+        return sLocationQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder);
+    }
+
     private Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
         long startDate = WeatherContract.WeatherEntry.getStartDateFromUri(uri);
@@ -157,6 +176,7 @@ public class WeatherProvider extends ContentProvider {
         uriMatcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
 
         uriMatcher.addURI(authority, WeatherContract.PATH_LOCATION, LOCATION);
+        uriMatcher.addURI(authority, WeatherContract.PATH_LOCATION + "/*", LOCATION_WITH_SETTING);
 
         // 3) Return the new matcher!
         return uriMatcher;
@@ -189,6 +209,8 @@ public class WeatherProvider extends ContentProvider {
             case WEATHER:
                 return WeatherContract.WeatherEntry.CONTENT_TYPE;
             case LOCATION:
+                return WeatherContract.LocationEntry.CONTENT_TYPE;
+            case LOCATION_WITH_SETTING:
                 return WeatherContract.LocationEntry.CONTENT_TYPE;
             case WEATHER_WITH_LOCATION:
                 return WeatherContract.WeatherEntry.CONTENT_TYPE;
@@ -227,6 +249,12 @@ public class WeatherProvider extends ContentProvider {
                 retCursor = getLocation(uri, projection, sortOrder);
                 break;
             }
+            // "location/*"
+            case LOCATION_WITH_SETTING: {
+                retCursor = getLocationByLocationSetting(uri, projection, sortOrder);
+                break;
+            }
+
 
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);

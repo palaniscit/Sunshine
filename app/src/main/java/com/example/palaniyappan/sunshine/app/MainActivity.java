@@ -62,7 +62,7 @@ public class MainActivity extends ActionBarActivity {
         super.onResume();
         String currentLocationSetting = Utility.getPreferredLocation(this);
         // Check if location setting has changed
-        if(currentLocationSetting != null && !currentLocationSetting.equalsIgnoreCase(mLocation)) {
+        //if(currentLocationSetting != null && !currentLocationSetting.equalsIgnoreCase(mLocation)) {
             // Get the forecast fragment using the Forecast fragment tag
             ForecastFragment ff = (ForecastFragment) getSupportFragmentManager().
                     findFragmentByTag(FORECASTFRAGMENT_TAG);
@@ -70,7 +70,7 @@ public class MainActivity extends ActionBarActivity {
                 ff.onLocationChanged();
             }
             mLocation = currentLocationSetting;
-        }
+        //}
     }
 
     @Override
