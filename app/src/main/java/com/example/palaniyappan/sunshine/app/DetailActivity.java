@@ -40,8 +40,8 @@ public class DetailActivity extends ActionBarActivity {
 
         if(id == R.id.action_share) {
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            TextView textView = (TextView)findViewById(R.id.weatherData);
-            CharSequence textToShare = textView.getText() + " " + getString(R.string.hashtag_sunshine);
+            //TextView textView = (TextView)findViewById(R.id.weatherData);
+            CharSequence textToShare = "Test date string" + " " + getString(R.string.hashtag_sunshine);
             shareIntent.putExtra(Intent.EXTRA_TEXT, textToShare);
             shareIntent.setType("text/plain");
             startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.menu_share)));
