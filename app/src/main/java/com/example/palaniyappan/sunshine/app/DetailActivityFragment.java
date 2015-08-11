@@ -2,6 +2,7 @@ package com.example.palaniyappan.sunshine.app;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -22,6 +23,8 @@ import com.example.palaniyappan.sunshine.app.data.WeatherContract;
 public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int DETAIL_ACTIVITY_LOADER_ID = 1;
+
+    private Uri mUri;
 
     private TextView dateView;
     private TextView maxTempView;
@@ -68,17 +71,27 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         setHasOptionsMenu(true);
     }
 
+    public static DetailActivityFragment newInstance(int index) {
+        DetailActivityFragment df = new DetailActivityFragment();
+        Bundle args = new Bundle();
+        args.putInt("index", index);
+        df.setArguments(args);
+        return df;
+    }
+
+    public int getShownIndex() {
+        return getArguments().getInt("index", 0);
+    }
+
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Intent intent = getActivity().getIntent();
-
-        if(intent == null) {
+        if(null == mUri) {
             return null;
         }
 
         return new CursorLoader(
                 getActivity(),
-                intent.getData(),
+                mUri,
                 FORECAST_COLUMNS,
                 null,
                 null,
@@ -136,6 +149,11 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Bundle args = getArguments();
+        if(args != null) {
+            mUri = args.getParcelable("detailsUri");
+        }
+
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         // Get the different components in the View
         dateView = (TextView)rootView.findViewById(R.id.detail_date_textview);
@@ -148,5 +166,16 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         descriptionView = (TextView)rootView.
                 findViewById(R.id.detail_description_textview);
         return rootView;
+    }
+
+    void onLocationChanged( String newLocation ) {
+        // replace the uri, since the location has changed
+        Uri uri = mUri;
+        if (null != uri) {
+            long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
+            Uri updatedUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(newLocation, date);
+            mUri = updatedUri;
+            getLoaderManager().restartLoader(DETAIL_ACTIVITY_LOADER_ID, null, this);
+        }
     }
 }

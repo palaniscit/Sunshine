@@ -16,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
@@ -63,6 +64,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     public ForecastAdapter weatherListAdapter;
 
+    int mPosition;
+
     public ForecastFragment() {
     }
 
@@ -87,6 +90,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         weatherListAdapter.swapCursor(data);
+        if(ListView.INVALID_POSITION != mPosition) {
+            ((ListView) getActivity()
+                    .findViewById(R.id.listView_forecast))
+                    .setSelection(mPosition);
+        }
     }
 
     @Override
@@ -109,6 +117,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        if(savedInstanceState != null){
+            mPosition = savedInstanceState.getInt("currentPosition");
+        }
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -123,13 +134,18 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 Cursor cur = (Cursor) adapterView.getItemAtPosition(i);
                 if (cur != null) {
                     String locationSetting = Utility.getPreferredLocation(getActivity());
-                    Intent intent = new Intent(getActivity(), DetailActivity.class);
+                    ((Callback) getActivity()).onItemSelected(
+                            WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
+                                    locationSetting,
+                                    cur.getLong(COL_WEATHER_DATE)));
+                    /*Intent intent = new Intent(getActivity(), DetailActivity.class);
                     intent.setData(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
                                     locationSetting,
                                     cur.getLong(COL_WEATHER_DATE))
                     );
-                    startActivity(intent);
+                    startActivity(intent);*/
                 }
+                mPosition = i;
             }
         });
 
@@ -174,6 +190,14 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        if(ListView.INVALID_POSITION != mPosition) {
+            savedInstanceState.putInt("currentPosition", mPosition);
+        }
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
     public void updateWeather() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String userPreferredLocation = preferences.getString(getString(R.string.pref_loc_key),
@@ -185,5 +209,23 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public void onLocationChanged() {
         updateWeather();
         getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
+    }
+
+    public void setUseTodayLayoutInAdapter(boolean useTodayLayout) {
+        if(weatherListAdapter != null) {
+            weatherListAdapter.setUseTodayLayout(useTodayLayout);
+        }
+    }
+
+    /**
+     * A callback interface that all activities containing this fragment must
+     * implement. This mechanism allows activities to be notified of item
+     * selections.
+     */
+    public interface Callback {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(Uri dateUri);
     }
 }
