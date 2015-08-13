@@ -16,11 +16,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.palaniyappan.sunshine.app.data.WeatherContract;
+import com.example.palaniyappan.sunshine.app.service.SunshineService;
 
 
 /**
@@ -202,8 +202,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String userPreferredLocation = preferences.getString(getString(R.string.pref_loc_key),
                 getString(R.string.pref_loc_default_value));
-        FetchWeatherTask task = new FetchWeatherTask(getActivity());
-        task.execute(userPreferredLocation);
+        Intent serviceIntent = new Intent(getActivity(), SunshineService.class);
+        serviceIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, userPreferredLocation);
+        getActivity().startService(serviceIntent);
+        /*FetchWeatherTask task = new FetchWeatherTask(getActivity());
+        task.execute(userPreferredLocation);*/
     }
 
     public void onLocationChanged() {

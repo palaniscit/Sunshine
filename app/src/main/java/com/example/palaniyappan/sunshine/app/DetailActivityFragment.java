@@ -126,6 +126,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         int weatherIconId = Utility.getArtResourceForWeatherCondition
                 (data.getInt(COL_WEATHER_CONDITION_ID));
         iconView.setImageResource(weatherIconId);
+        iconView.setContentDescription(data.getString(COL_WEATHER_DESC));
     }
 
     @Override

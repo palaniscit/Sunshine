@@ -82,6 +82,7 @@ public class ForecastAdapter extends CursorAdapter {
                     (weatherConditionId);
         }
         viewHolder.iconView.setImageResource(weatherIconId);
+        viewHolder.iconView.setContentDescription(cursor.getString(ForecastFragment.COL_WEATHER_DESC));
 
         // Get Unit of Measurement selected by user
         boolean isMetric = Utility.isMetric(mContext);
