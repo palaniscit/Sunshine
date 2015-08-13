@@ -41,6 +41,8 @@
             android:authorities="com.example.palaniyappan.sunshine.app"
             android:name=".data.WeatherProvider"
             android:exported="true"/>
+
+        <service android:name=".service.SunshineService"/>
     </application>
 
 </manifest>
