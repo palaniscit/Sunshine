@@ -20,7 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.palaniyappan.sunshine.app.data.WeatherContract;
-import com.example.palaniyappan.sunshine.app.service.SunshineService;
+import com.example.palaniyappan.sunshine.app.sync.SunshineSyncAdapter;
 
 
 /**
@@ -170,20 +170,27 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        /*//noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
             updateWeather();
             return true;
-        }
+        }*/
 
         if(id == R.id.action_view_map) {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String userPreferredLocation = preferences.getString(getString(R.string.pref_loc_key), getString(R.string.pref_loc_default_value));
-            Uri geoLocation = Uri.parse("geo:0,0?q=" + userPreferredLocation);
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(geoLocation);
-            if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
-                startActivity(intent);
+            if(null != weatherListAdapter){
+                Cursor cursor = weatherListAdapter.getCursor();
+                if(null != cursor) {
+                    if(cursor.moveToFirst()) {
+                        String posLat = cursor.getString(COL_COORD_LAT);
+                        String posLong = cursor.getString(COL_COORD_LONG);
+                        Uri geoLocation = Uri.parse("geo:" + posLat + "," + posLong);
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(geoLocation);
+                        if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                            startActivity(intent);
+                        }
+                    }
+                }
             }
         }
 
@@ -199,14 +206,19 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     public void updateWeather() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        /*SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String userPreferredLocation = preferences.getString(getString(R.string.pref_loc_key),
                 getString(R.string.pref_loc_default_value));
-        Intent serviceIntent = new Intent(getActivity(), SunshineService.class);
-        serviceIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, userPreferredLocation);
-        getActivity().startService(serviceIntent);
-        /*FetchWeatherTask task = new FetchWeatherTask(getActivity());
-        task.execute(userPreferredLocation);*/
+
+        Intent alarmIntent = new Intent(getActivity(), SunshineService.AlarmReceiver.class);
+        alarmIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, userPreferredLocation);
+
+        PendingIntent pi = PendingIntent.getBroadcast(getActivity(),
+                0, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
+        AlarmManager am = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
+        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5000, pi);*/
+
+        SunshineSyncAdapter.syncImmediately(getActivity());
     }
 
     public void onLocationChanged() {

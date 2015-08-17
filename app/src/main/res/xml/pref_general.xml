@@ -13,4 +13,9 @@
         android:defaultValue="@string/pref_units_default_value"
         android:entries="@array/pref_unit_list"
         android:entryValues="@array/pref_unit_values" />
+
+    <CheckBoxPreference
+        android:key="@string/pref_turn_off_notification_key"
+        android:title="@string/pref_turn_off_notification_text"
+        android:defaultValue="false" />
 </PreferenceScreen>
