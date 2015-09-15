@@ -3,6 +3,7 @@ package com.example.palaniyappan.sunshine.app;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.palaniyappan.sunshine.app.data.WeatherContract;
 import com.example.palaniyappan.sunshine.app.sync.SunshineSyncAdapter;
@@ -95,6 +97,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                     .findViewById(R.id.listView_forecast))
                     .setSelection(mPosition);
         }
+        updateEmptyViewText();
     }
 
     @Override
@@ -148,6 +151,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 mPosition = i;
             }
         });
+        listView.setEmptyView(rootView.findViewById(R.id.empty_text_view));
 
         return rootView;
     }
@@ -229,6 +233,23 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public void setUseTodayLayoutInAdapter(boolean useTodayLayout) {
         if(weatherListAdapter != null) {
             weatherListAdapter.setUseTodayLayout(useTodayLayout);
+        }
+    }
+
+    /**
+     * This method will set the empty text if the list is empty due to invalid user input or
+     * no network is available
+     */
+    public void updateEmptyViewText() {
+        if(weatherListAdapter.getCount() == 0) {
+            TextView tv = (TextView) getActivity().findViewById(R.id.empty_text_view);
+            if(tv != null) {
+                if(Utility.isNetworkActive(getActivity())) {
+                    tv.setText(R.string.emtpy_view_text);
+                } else {
+                    tv.setText(R.string.emtpy_view_text_no_network);
+                }
+            }
         }
     }
 

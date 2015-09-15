@@ -517,6 +517,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 editor.commit();
             }
         }
-
     }
+
+
 }

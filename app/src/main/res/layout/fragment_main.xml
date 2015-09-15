@@ -11,8 +11,13 @@
         android:id="@+id/listView_forecast"
         style="@style/ForecastListStyle"
         android:divider="@null">
-
     </ListView>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/emtpy_view_text"
+        android:id="@+id/empty_text_view" />
 
 
 </FrameLayout>

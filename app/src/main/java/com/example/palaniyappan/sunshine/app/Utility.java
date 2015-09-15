@@ -17,6 +17,8 @@ package com.example.palaniyappan.sunshine.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 
@@ -248,5 +250,17 @@ public class Utility {
             return R.drawable.art_clouds;
         }
         return -1;
+    }
+
+    /**
+     * This method will return the true if an active network is available on the device
+     * @param c
+     * @return
+     */
+    public static boolean isNetworkActive(Context c) {
+        ConnectivityManager cm = (ConnectivityManager) c.getSystemService(
+                Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm.getActiveNetworkInfo();
+        return ni != null && ni.isConnectedOrConnecting();
     }
 }

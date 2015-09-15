@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.example.palaniyappan.sunshine.app.data.WeatherContract;
 import com.example.palaniyappan.sunshine.app.sync.SunshineSyncAdapter;
 
 
