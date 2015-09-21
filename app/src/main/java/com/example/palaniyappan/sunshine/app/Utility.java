@@ -17,10 +17,13 @@ package com.example.palaniyappan.sunshine.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
+
+import com.example.palaniyappan.sunshine.app.sync.SunshineSyncAdapter;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -262,5 +265,29 @@ public class Utility {
                 Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm.getActiveNetworkInfo();
         return ni != null && ni.isConnectedOrConnecting();
+    }
+
+    public static void setLocationStatus(Context c,
+                                         @SunshineSyncAdapter.LocationStatus int locationStatus) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(c);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt(c.getString(R.string.pref_location_status_key), locationStatus);
+        editor.commit();
+    }
+
+    @SuppressWarnings("ResourceType")
+    public static int getLocationStatus(Context c) {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(c);
+        int locationStatus = pref.getInt(c.getString(R.string.pref_location_status_key),
+                SunshineSyncAdapter.LOCATION_STATUS_OK);
+        return locationStatus;
+    }
+
+    public static void resetLocation(Context c) {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(c);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putInt(c.getString(R.string.pref_location_status_key),
+                SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN);
+        editor.apply();
     }
 }

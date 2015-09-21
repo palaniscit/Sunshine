@@ -28,7 +28,8 @@ import com.example.palaniyappan.sunshine.app.sync.SunshineSyncAdapter;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
+public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
+        SharedPreferences.OnSharedPreferenceChangeListener{
 
     private static final int FORECAST_LOADER = 0;
 
@@ -156,11 +157,19 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         return rootView;
     }
 
-    /*@Override
-    public void onStart() {
-        super.onStart();
-        updateWeather();
-    }*/
+    @Override
+    public void onResume() {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        pref.registerOnSharedPreferenceChangeListener(this);
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        pref.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -244,12 +253,26 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         if(weatherListAdapter.getCount() == 0) {
             TextView tv = (TextView) getActivity().findViewById(R.id.empty_text_view);
             if(tv != null) {
-                if(Utility.isNetworkActive(getActivity())) {
+                int locationStatus = Utility.getLocationStatus(getActivity());
+                if(locationStatus == SunshineSyncAdapter.LOCATION_STATUS_SERVER_INVALID) {
+                    tv.setText(getString(R.string.empty_view_server_invalid));
+                } else if(locationStatus == SunshineSyncAdapter.LOCATION_STATUS_SERVER_DOWN) {
+                    tv.setText(getString(R.string.empty_view_server_down));
+                } else if (locationStatus == SunshineSyncAdapter.LOCATION_STATUS_INVALID) {
+                    tv.setText(getString(R.string.empty_view_location_invalid));
+                } else if(Utility.isNetworkActive(getActivity())) {
                     tv.setText(R.string.emtpy_view_text);
                 } else {
                     tv.setText(R.string.emtpy_view_text_no_network);
                 }
             }
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(getString(R.string.pref_location_status_key).equalsIgnoreCase(key)) {
+            updateEmptyViewText();
         }
     }
 

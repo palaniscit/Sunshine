@@ -71,13 +71,16 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({LOCATION_STATUS_OK, LOCATION_STATUS_SERVER_DOWN,
-            LOCATION_STATUS_SERVER_INVALID, LOCATION_STATUS_UNKNOWN})
+            LOCATION_STATUS_SERVER_INVALID, LOCATION_STATUS_UNKNOWN,
+            LOCATION_STATUS_INVALID
+    })
     public @interface LocationStatus {}
 
     public static final int LOCATION_STATUS_OK = 0;
     public static final int LOCATION_STATUS_SERVER_DOWN = 1;
     public static final int LOCATION_STATUS_SERVER_INVALID = 2;
     public static final int LOCATION_STATUS_UNKNOWN = 3;
+    public static final int LOCATION_STATUS_INVALID = 4;
 
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
@@ -133,6 +136,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 // Nothing to do.
                 return;
             }
+
             reader = new BufferedReader(new InputStreamReader(inputStream));
 
             String line;
@@ -144,23 +148,27 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             }
 
             if (buffer.length() == 0) {
-                // Stream was empty.  No point in parsing.
+                Utility.setLocationStatus(getContext(), LOCATION_STATUS_SERVER_DOWN);
                 return;
             }
             forecastJsonStr = buffer.toString();
-            getWeatherDataFromJson(forecastJsonStr, locationQuery);
+            boolean weatherUpdated = getWeatherDataFromJson(forecastJsonStr, locationQuery);
 
             boolean isNotificationTurnedOff = Utility.isNotificationTurnedOff(getContext());
             if(!isNotificationTurnedOff) {
                 notifyWeather();
             }
+            if(weatherUpdated) {
+                Utility.setLocationStatus(getContext(), LOCATION_STATUS_OK);
+            }
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
+            Utility.setLocationStatus(getContext(), LOCATION_STATUS_SERVER_DOWN);
             // If the code didn't successfully get the weather data, there's no point in attempting
             // to parse it.
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
-            e.printStackTrace();
+            Utility.setLocationStatus(getContext(), LOCATION_STATUS_SERVER_INVALID);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -170,6 +178,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                     reader.close();
                 } catch (final IOException e) {
                     Log.e(LOG_TAG, "Error closing stream", e);
+                    Utility.setLocationStatus(getContext(), LOCATION_STATUS_SERVER_DOWN);
                 }
             }
         }
@@ -286,7 +295,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
      * Fortunately parsing is easy:  constructor takes the JSON string and converts it
      * into an Object hierarchy for us.
      */
-    private void getWeatherDataFromJson(String forecastJsonStr,
+    private boolean getWeatherDataFromJson(String forecastJsonStr,
                                         String locationSetting)
             throws JSONException {
 
@@ -296,6 +305,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
         // These are the names of the JSON objects that need to be extracted.
 
+        boolean returnStatus = false;
         // Location information
         final String OWM_CITY = "city";
         final String OWM_CITY_NAME = "name";
@@ -322,8 +332,17 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_DESCRIPTION = "main";
         final String OWM_WEATHER_ID = "id";
 
+        final String OWM_RESPONSE_CODE = "cod";
+
         try {
             JSONObject forecastJson = new JSONObject(forecastJsonStr);
+
+            String responseCode = forecastJson.getString(OWM_RESPONSE_CODE);
+            if("404".equals(responseCode)) {
+                Utility.setLocationStatus(getContext(), LOCATION_STATUS_INVALID);
+                return returnStatus;
+            }
+
             JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
 
             JSONObject cityJson = forecastJson.getJSONObject(OWM_CITY);
@@ -417,6 +436,10 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 inserted = getContext().getContentResolver().bulkInsert(WeatherContract.WeatherEntry.CONTENT_URI, cvArray);
             }
 
+            if(inserted > 0) {
+                returnStatus = true;
+            }
+
             Log.d(LOG_TAG, "FetchWeatherTask Complete. " + inserted + " Inserted");
 
             // Delete date strings older than one day
@@ -425,7 +448,10 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                     new String[] {Long.toString(dayTime.setJulianDay(julianStartDay-1))});
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
+            Utility.setLocationStatus(getContext(), LOCATION_STATUS_SERVER_INVALID);
+            throw e;
         }
+        return returnStatus;
     }
 
     /**
